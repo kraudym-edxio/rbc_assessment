@@ -1,28 +1,53 @@
 package nightclubmanagement;
 
-import java.util.List;
-import java.util.Random;
-import java.util.stream.IntStream;
+import java.util.ArrayDeque;
+import java.util.Queue;
 
 public class NightClubAdmission {
 
     public static void main(String[] args) {
-        NightClub club = new NightClub();   //initialize NightClub
+        NightClub club = new NightClub();
+        PerformanceTracker tracker = new PerformanceTracker();
 
-        // Create and add 2000 guests ready to go
-        IntStream.rangeClosed(1, 2000)
-                .mapToObj(i -> new Guest("Guest " + i))
-                .forEach(club::addGuestToWaitlist);
+        club.setPeakHour("12:30AM - 1:30AM");
 
-        club.admitGuests();     // Admit guests who are ready to go into the nightclub
+        //2000 people who are ready to go (to be directly admitted), as per testing specifications
+        Queue<Guest> outsideGuests = new ArrayDeque<>();
+        for (int i = 0; i < 2000; i++) {
+            outsideGuests.add(new Guest("Guest" + i));
+        }
+        System.out.println("Outside Queue: " + outsideGuests.size());
 
-        // Create and add 4000 guests to waitlist using Java Streams
-        IntStream.rangeClosed(2001, 6000)
-                .mapToObj(i -> new Guest("Guest " + i))
-                .forEach(club::addGuestToWaitlist);
+        club.admitDirectGuests(outsideGuests);
 
-        System.out.println("Number of admitted guests: " + club.getCurrentCapacity());
-        System.out.println("Number of guests left on waitlist: " + club.getWaitlistSize());
+        //4000 people who are on waitlist, as per testing specifications
+        for (int i = 2000; i < 6000; i++) {
+            club.addGuestToWaitlist(new Guest("Guest" + i));
+        }
+        System.out.println("Waitlist: " + club.getWaitlistSize());
 
+        tracker.logDay(club);
+        System.out.println(tracker + "\n");
+
+        //Have some guests leave to affect the capacity
+        club.decreaseCurrentCapacityBy(250);
+        System.out.println("Club capacity after 250 guests leave: " + club.getCurrentCapacity() + '\n');
+
+        //Admit waitlist guests to determine how processedWaitList and waitlist are affected
+        club.admitWaitlistGuests(club.getWaitlist());
+        System.out.println("Club capacity after admitting guests from waitlist: " + club.getCurrentCapacity());
+        tracker.logDay(club);
+        System.out.println(tracker + "\n");
+
+        //Add more guests to the waitlist
+        for (int i = 6000; i < 8500; i++) {
+            club.addGuestToWaitlist(new Guest("Guest" + i));
+        }
+        System.out.println("Waitlist after 2500 additions: " + club.getWaitlistSize() + '\n');
+
+        club.admitWaitlistGuests(club.getWaitlist());
+        System.out.println("Club capacity after admitting guests from waitlist: " + club.getCurrentCapacity());
+        tracker.logDay(club);
+        System.out.println(tracker);
     }
 }
